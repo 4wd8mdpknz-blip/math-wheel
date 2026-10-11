@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>عجلة الأسئلة - رياضيات 5-8</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap">
+<style>
+:root{--bg:#f4f7f8;--surface:#fff;--ink:#1f2933;--muted:#5b6770;--teal:#0f5c63;--amber:#e8a33d;--line:#dbe3e6;--hub:#fff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10181b;--surface:#18252a;--ink:#e8eef0;--muted:#9fb0b6;--teal:#58b4bd;--line:#2b3b41;--hub:#18252a}}
+:root[data-theme="dark"]{--bg:#10181b;--surface:#18252a;--ink:#e8eef0;--muted:#9fb0b6;--teal:#58b4bd;--line:#2b3b41;--hub:#18252a}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:Cairo,"Segoe UI",Tahoma,"Noto Naskh Arabic",sans-serif;line-height:1.7}
+.wrap{max-width:1000px;margin:0 auto;padding:18px 14px 40px}
+h1{margin:0;font-size:clamp(24px,5vw,34px);font-weight:800;color:var(--teal);text-align:center}
+.sub{margin:2px 0 14px;text-align:center;color:var(--muted)}
+.tabs{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:18px}
+.tab{font:inherit;font-weight:600;border:2px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 18px;border-radius:999px;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--teal);border-color:var(--teal);color:#fff}
+.stage{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:18px;align-items:start}
+.wheelbox,.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px}
+.wheelbox{display:flex;flex-direction:column;align-items:center;gap:10px}
+.cv{position:relative;width:min(100%,440px);aspect-ratio:1}
+canvas{width:100%;height:100%;display:block;cursor:pointer}
+.ptr{position:absolute;top:-6px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:15px solid transparent;border-right:15px solid transparent;border-top:28px solid #1f2933;filter:drop-shadow(0 2px 2px rgba(0,0,0,.3));pointer-events:none}
+.btn{font:inherit;font-weight:800;font-size:18px;border:0;border-radius:14px;background:var(--amber);color:#2a1d00;padding:10px 34px;cursor:pointer;box-shadow:0 3px 0 #b7791f}
+.btn:disabled{opacity:.6;cursor:default}
+.row{display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:center;color:var(--muted);font-size:14px}
+.link{font:inherit;font-size:14px;background:none;border:0;color:var(--teal);text-decoration:underline;cursor:pointer;padding:0}
+.card{min-height:260px;display:flex;flex-direction:column;gap:12px}
+.hint{margin:auto;text-align:center;color:var(--muted)}
+.badge{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:30px}
+.q{font-size:clamp(20px,4.5vw,27px);font-weight:600;line-height:1.9;margin:0}
+.ans{display:none;background:rgba(46,158,107,.14);border:2px dashed #2e9e6b;border-radius:12px;padding:8px 14px;font-size:22px;font-weight:800}
+.ans.show{display:block}
+.ghost{font:inherit;font-weight:600;align-self:flex-start;border:2px solid var(--teal);background:none;color:var(--teal);border-radius:12px;padding:6px 16px;cursor:pointer}
+.prog{color:var(--muted);font-size:14px;margin-top:auto}
+.m{unicode-bidi:isolate;direction:ltr;white-space:nowrap}
+.fr{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;line-height:1.15;margin:0 3px;font-size:.85em}
+.fr span:first-child{border-bottom:2px solid currentColor;padding:0 3px}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🎡 عجلة الأسئلة</h1>
+<p class="sub">رياضيات للصفوف من الخامس إلى الثامن</p>
+<div class="tabs" id="tabs" role="tablist"></div>
+<div class="stage">
+ <section class="wheelbox">
+  <div class="cv"><div class="ptr"></div><canvas id="c" aria-label="عجلة الأسئلة"></canvas></div>
+  <button class="btn" id="spin">دوّري العجلة</button>
+  <div class="row"><label><input type="checkbox" id="norep" checked> لا تكرّري الأسئلة</label><button class="link" id="reset">تصفير العجلة</button></div>
+ </section>
+ <section class="card" id="card" aria-live="polite"><p class="hint">اضغطي «دوّري العجلة» أو اضغطي على العجلة نفسها، وسيظهر هنا السؤال.</p></section>
+</div>
+</div>
+<script>
+const GR = [
+  { g: 5, q: [
+    ['احسب: <m>345 + 278</m>', '<m>623</m>'],
+    ['احسب: <m>1,000 − 468</m>', '<m>532</m>'],
+    ['احسب: <m>36 × 4</m>', '<m>144</m>'],
+    ['احسب: <m>96 ÷ 8</m>', '<m>12</m>'],
+    ['اكتب كسرًا يساوي <m>{1|2}</m> ومقامه 10.', '<m>{5|10}</m>'],
+    ['احسب: <m>{3|8} + {2|8}</m>', '<m>{5|8}</m>'],
+    ['ما محيط مستطيل طوله 7 سم وعرضه 4 سم؟', '22 سم'],
+    ['ما مساحة مربع طول ضلعه 6 سم؟', '36 سم مربع'],
+    ['قرّب العدد <m>4,860</m> لأقرب مئة.', '<m>4,900</m>'],
+    ['ما العدد الأولي الذي بين 20 و 25؟', '<m>23</m>'],
+  ] },
+  { g: 6, q: [
+    ['احسب <m>20%</m> من العدد 50.', '<m>10</m>'],
+    ['احسب: <m>{3|4} × 8</m>', '<m>6</m>'],
+    ['اكتب <m>0.6</m> ككسر في أبسط صورة.', '<m>{3|5}</m>'],
+    ['بسّط النسبة <m>15 : 25</m>', '<m>3 : 5</m>'],
+    ['احسب: <m>(−5) + 8</m>', '<m>3</m>'],
+    ['احسب: <m>(−3) × 4</m>', '<m>−12</m>'],
+    ['احسب: <m>2 + 3 × 5</m>', '<m>17</m>'],
+    ['ما القاسم المشترك الأكبر للعددين 12 و 18؟', '<m>6</m>'],
+    ['ما مساحة مثلث قاعدته 8 سم وارتفاعه 5 سم؟', '20 سم مربع'],
+    ['ما متوسط الأعداد <m>4, 6, 8, 10, 12</m>؟', '<m>8</m>'],
+  ] },
+  { g: 7, q: [
+    ['بسّط: <m>2x + 3x</m>', '<m>5x</m>'],
+    ['حل المعادلة: <m>x + 9 = 15</m>', '<m>x = 6</m>'],
+    ['حل المعادلة: <m>3x = 21</m>', '<m>x = 7</m>'],
+    ['حل المعادلة: <m>2x − 1 = 9</m>', '<m>x = 5</m>'],
+    ['فُكّ القوس: <m>3(x + 2)</m>', '<m>3x + 6</m>'],
+    ['ما الحد التالي في المتتالية <m>4, 7, 10, 13, ...</m>؟', '<m>16</m>'],
+    ['في مثلث زاويتان قياسهما 70° و 50°. ما قياس الزاوية الثالثة؟', '<m>60°</m>'],
+    ['رُمي نرد منتظم. ما احتمال ظهور عدد فردي؟', '<m>{3|6} = {1|2}</m>'],
+    ['احسب: <m>(−6) ÷ (−2)</m>', '<m>3</m>'],
+    ['إذا كان <m>a = 4</m> فما قيمة <m>3a − 5</m>؟', '<m>7</m>'],
+  ] },
+  { g: 8, q: [
+    ['احسب: <m>2^(3) × 2^(2)</m>', '<m>2^(5) = 32</m>'],
+    ['اكتب <m>3 × 10^(3)</m> بالصيغة العادية.', '<m>3,000</m>'],
+    ['حل المعادلة: <m>3x + 4 = x + 10</m>', '<m>x = 3</m>'],
+    ['ما ميل المستقيم <m>y = 5x − 2</m>؟', '<m>5</m>'],
+    ['مثلث قائم الزاوية ضلعاه 9 سم و 12 سم. جد طول الوتر.', '15 سم'],
+    ['جد محيط دائرة نصف قطرها 5 سم (<m>π ≈ 3.14</m>).', '31.4 سم'],
+    ['جد مساحة دائرة نصف قطرها 2 سم (<m>π ≈ 3.14</m>).', '12.56 سم مربع'],
+    ['ما قيمة y في <m>y = 2x − 1</m> عندما <m>x = 3</m>؟', '<m>5</m>'],
+    ['ما صورة النقطة <m>(4, 1)</m> بعد انعكاس حول محور x؟', '<m>(4, −1)</m>'],
+    ['هل مثلث أضلاعه 6 و 8 و 10 قائم الزاوية؟', 'نعم، لأن <m>36 + 64 = 100</m>'],
+  ] },
+];
+const NAMES={5:'الخامس',6:'السادس',7:'السابع',8:'الثامن'};
+const COLS=['#D9534F','#E8A33D','#2E9E6B','#0F5C63','#8E5BB5','#2F80C4','#D9822B','#17A398','#C0397B','#5B7083'];
+const N=10,SEG=2*Math.PI/N;
+let grade=5,rot=0,spinning=false;const used={5:new Set(),6:new Set(),7:new Set(),8:new Set()};
+const cv=document.getElementById('c'),ctx=cv.getContext('2d'),card=document.getElementById('card'),spinBtn=document.getElementById('spin');
+const fx=s=>s.replace(/<m>([\s\S]*?)<\/m>/g,(_,x)=>'<bdi class="m" dir="ltr">'+x.replace(/\{([^{}|]+)\|([^{}|]+)\}/g,'<span class="fr"><span>$1</span><span>$2</span></span>').replace(/\^\(([^()]*)\)/g,'<sup>$1</sup>').replace(/،/g,', ')+'</bdi>');
+const data=g=>GR.find(x=>x.g===g).q;
+function draw(){
+ const dpr=window.devicePixelRatio||1,size=cv.clientWidth;if(!size)return;
+ cv.width=cv.height=Math.round(size*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,size,size);
+ const c=size/2,R=c-6;ctx.save();ctx.translate(c,c);ctx.rotate(rot);
+ for(let i=0;i<N;i++){
+  const a0=-Math.PI/2+i*SEG;ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,R,a0,a0+SEG);ctx.closePath();
+  ctx.globalAlpha=used[grade].has(i)?.3:1;ctx.fillStyle=COLS[i];ctx.fill();ctx.lineWidth=3;ctx.strokeStyle='#fff';ctx.stroke();
+  ctx.save();ctx.rotate(a0+SEG/2);ctx.translate(R*.68,0);ctx.rotate(Math.PI/2);ctx.fillStyle='#fff';
+  ctx.font='800 '+(size*.09)+'px Cairo,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(i+1,0,0);ctx.restore();
+ }
+ ctx.globalAlpha=1;ctx.beginPath();ctx.arc(0,0,R,0,2*Math.PI);ctx.lineWidth=6;ctx.strokeStyle='#1f2933';ctx.stroke();ctx.restore();
+ ctx.beginPath();ctx.arc(c,c,R*.22,0,2*Math.PI);ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--hub')||'#fff';ctx.fill();
+ ctx.lineWidth=4;ctx.strokeStyle='#1f2933';ctx.stroke();ctx.fillStyle='#0f5c63';ctx.font='800 '+(size*.1)+'px Cairo,sans-serif';
+ ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(grade,c,c+2);
+}
+function show(t){
+ const [q,a]=data(grade)[t];
+ card.innerHTML='<div class="badge" style="background:'+COLS[t]+'">'+(t+1)+'</div><p class="q">'+fx(q)+'</p><button class="ghost" id="rv">أظهري الإجابة</button><div class="ans" id="an">'+fx(a)+'</div><div class="prog">تم حل '+used[grade].size+' من '+N+' أسئلة</div>';
+ document.getElementById('rv').onclick=()=>{const an=document.getElementById('an');an.classList.toggle('show');document.getElementById('rv').textContent=an.classList.contains('show')?'أخفي الإجابة':'أظهري الإجابة'};
+}
+function spin(){
+ if(spinning)return;const norep=document.getElementById('norep').checked;
+ let pool=[...Array(N).keys()].filter(i=>!norep||!used[grade].has(i));
+ if(!pool.length){used[grade].clear();pool=[...Array(N).keys()];}
+ const t=pool[Math.floor(Math.random()*pool.length)];
+ const want=((2*Math.PI-((t+.5+(Math.random()-.5)*.7)*SEG))%(2*Math.PI)+2*Math.PI)%(2*Math.PI);
+ const cur=((rot%(2*Math.PI))+2*Math.PI)%(2*Math.PI);
+ const turns=(matchMedia('(prefers-reduced-motion:reduce)').matches?1:5+Math.floor(Math.random()*3));
+ const delta=((want-cur)+2*Math.PI)%(2*Math.PI)+turns*2*Math.PI,start=rot,dur=turns>1?4800:600,t0=performance.now();
+ spinning=true;spinBtn.disabled=true;
+ const step=now=>{const p=Math.min(1,(now-t0)/dur),e=1-Math.pow(1-p,3.4);rot=start+delta*e;draw();
+  if(p<1)requestAnimationFrame(step);else{spinning=false;spinBtn.disabled=false;used[grade].add(t);draw();show(t);}};
+ requestAnimationFrame(step);
+}
+function setGrade(g){if(spinning)return;grade=g;document.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-selected',b.dataset.g==g));
+ card.innerHTML='<p class="hint">عجلة الصف '+NAMES[g]+' جاهزة. دوّريها!</p>';draw();}
+document.getElementById('tabs').innerHTML=[5,6,7,8].map(g=>'<button class="tab" role="tab" data-g="'+g+'">الصف '+NAMES[g]+'</button>').join('');
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>setGrade(+b.dataset.g));
+spinBtn.onclick=spin;cv.onclick=spin;
+document.getElementById('reset').onclick=()=>{if(spinning)return;used[grade].clear();card.innerHTML='<p class="hint">تم تصفير عجلة الصف '+NAMES[grade]+'.</p>';draw();};
+addEventListener('resize',draw);matchMedia('(prefers-color-scheme:dark)').addEventListener('change',draw);
+setGrade(5);
+</script>
+</body>
+</html>
